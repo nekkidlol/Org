@@ -319,8 +319,8 @@
 
       const interval = setInterval(() => {
         const messages = [
-          "TUNING FREQUENCY 142.7 MHz...",
-          "SIGNAL BLEED DETECTED...",
+          "TUNING FREQUENCY 13.013 MHz...",
+          "SIGNAL BAND DETECTED...",
           "UNAUTHORIZED BANDWIDTH ACCESS...",
           "BOOSTING TRANSMISSION POWER...",
           "SCANNING NEARBY TOWERS...",
@@ -328,7 +328,7 @@
           "STATIC INTERFERENCE RISING...",
           "LOCATING SOURCE OF TRANSMISSION...",
           "AMPLIFYING CARRIER WAVE...",
-          "DETECTING UNKNOWN SIGNAL..."
+          "ATTEMPTING TO OVERWRITE SIGNAL..."
         ];
 
         hackOutput.textContent += messages[Math.floor(Math.random() * messages.length)] + "\n";
@@ -371,11 +371,11 @@
         upgradeMsg.textContent = "They Are Listening.";
 
         setTimeout(() => {
-          hackOutput.textContent += "\n>>> WARNING: SIGNAL CORRUPTION DETECTED\n";
+          hackOutput.textContent += "\n>>> WARNING: SIGNAL ENCRYPTION ACTIVE\n";
         }, 500);
 
         setTimeout(() => {
-          hackOutput.textContent += ">>> TRANSMISSION LOST\n";
+          hackOutput.textContent += ">>> TRANSMISSION FREQUENCY HIJACKED\n";
         }, 1200);
 
         // Show broadcast button
@@ -389,10 +389,11 @@
     broadcastBtn.addEventListener("click", () => {
       audio.loop = false;
       audio.currentTime = 0;
+      audio.volume = 0.6; // set volume to 60%
       audio.play();
 
       hackOutput.textContent += "\n>>> BROADCAST CHANNEL OPENED\n";
-      hackOutput.textContent += ">>> RECEIVING MESSAGE...\n";
+      hackOutput.textContent += ">>> SENDING MESSAGE...\n";
 
       clicker.style.display = "none";
       broadcastBtn.style.display = "none";
