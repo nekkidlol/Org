@@ -18,8 +18,9 @@
   <link rel="preload" as="style" href="assets/mobirise/css/mbr-additional.css?v=Ts0HDG">
   <link rel="stylesheet" href="assets/mobirise/css/mbr-additional.css?v=Ts0HDG" type="text/css">
 
-  <!-- ⭐ Easter Egg CSS -->
+  <!-- ⭐ CRT Terminal + Easter Egg CSS -->
   <style>
+    /* CRT-style terminal overlay */
     #hack-overlay {
       position: fixed;
       inset: 0;
@@ -31,6 +32,30 @@
       overflow-y: auto;
       white-space: pre-wrap;
       display: none;
+      text-shadow: 0 0 4px #0f0;
+      animation: crt-flicker 0.15s infinite;
+    }
+
+    /* Scanline overlay */
+    #hack-overlay::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(0, 255, 0, 0.05) 0px,
+        rgba(0, 255, 0, 0.05) 2px,
+        rgba(0, 0, 0, 0.15) 3px
+      );
+      pointer-events: none;
+      z-index: 100000;
+    }
+
+    /* Flicker animation */
+    @keyframes crt-flicker {
+      0% { opacity: 0.97; }
+      50% { opacity: 1; }
+      100% { opacity: 0.96; }
     }
 
     #hack-trigger:hover {
@@ -42,8 +67,7 @@
 
 <body>
 
-  <!-- ⭐ Your existing site content stays untouched -->
-
+  <!-- Hero -->
   <section data-bs-version="5.1" class="header18 cid-vlLfguI7gG mbr-fullscreen mbr-parallax-background" id="hero-15-vlLfguI7gG">
     <div class="mbr-overlay" style="opacity: 0.5; background-color: rgb(0, 0, 0);"></div>
     <div class="container-fluid">
@@ -56,6 +80,7 @@
     </div>
   </section>
 
+  <!-- Video -->
   <section data-bs-version="5.1" class="video04 cid-vlLfguIC0b" id="video-6-vlLfguIC0b">
     <div class="container">
       <div class="mbr-section-head mb-5">
@@ -71,6 +96,7 @@
     </div>
   </section>
 
+  <!-- FAQ -->
   <section data-bs-version="5.1" class="list05 cid-vlLfguIzVH" id="faq-3-vlLfguIzVH">
     <div class="container">
       <div class="col-12 mb-5 content-head">
@@ -101,6 +127,7 @@
     </div>
   </section>
 
+  <!-- Social -->
   <section data-bs-version="5.1" class="social4 cid-vlLfguJOU7" id="follow-us-1-vlLfguJOU7">
     <div class="container">
       <div class="media-container-row">
@@ -122,6 +149,7 @@
     </div>
   </section>
 
+  <!-- Contact Form -->
   <section data-bs-version="5.1" class="form5 cid-vlLfguJXa8" id="contact-form-2-vlLfguJXa8">
     <div class="container">
       <div class="row justify-content-center">
@@ -154,6 +182,7 @@
     </div>
   </section>
 
+  <!-- Footer -->
   <section data-bs-version="5.1" class="footer3 cid-vlLfguKnWs" once="footers" id="footer-3-vlLfguKnWs">
     <div class="container">
       <div class="row">
@@ -164,25 +193,24 @@
     </div>
   </section>
 
-  <!-- ⭐ Logo Trigger for Easter Egg -->
+  <!-- Logo Trigger -->
   <img id="hack-trigger" 
-       src="assets/images/nekkid-logo-206x116.png" 
-       style="position:fixed; bottom:10px; right:10px; width:60px; opacity:0.3; cursor:pointer; z-index:9999;">
+       src="assets/images/logo5.png" 
+       style="position:fixed; bottom:10px; right:10px; width:60px; opacity:0.1; cursor:pointer; z-index:9999;">
 
-  <!-- ⭐ Fake Hacked Broadcast Terminal -->
+  <!-- CRT Terminal + Signal Interference Clicker -->
   <div id="hack-overlay">
     <pre id="hack-output"></pre>
+
+    <div id="clicker-game" style="display:none; text-align:center; margin-top:20px;">
+      <h2>Signal Interference</h2>
+      <p>Signal Strength: <span id="signal-count">0%</span></p>
+      <button id="signal-btn">Boost Signal</button>
+      <p id="upgrade-msg"></p>
+    </div>
   </div>
 
-  <!-- ⭐ Signal Interference Clicker -->
-  <div id="clicker-game" style="display:none; text-align:center; margin-top:20px;">
-    <h2>Signal Interference</h2>
-    <p>Signal Strength: <span id="signal-count">0%</span></p>
-    <button id="signal-btn">Boost Signal</button>
-    <p id="upgrade-msg"></p>
-  </div>
-
-  <!-- ⭐ Easter Egg JavaScript -->
+  <!-- JS -->
   <script>
     const hackTrigger = document.getElementById("hack-trigger");
     const hackOverlay = document.getElementById("hack-overlay");
@@ -196,10 +224,16 @@
     let signal = 0;
     let multiplier = 1;
 
-    // Fake hacked broadcast terminal
+    // Start terminal
     hackTrigger.addEventListener("click", () => {
       hackOverlay.style.display = "block";
       hackOutput.textContent = "";
+      clicker.style.display = "none";
+      signal = 0;
+      multiplier = 1;
+      signalCount.textContent = "0%";
+      upgradeMsg.textContent = "";
+
       let lines = 0;
 
       const interval = setInterval(() => {
@@ -222,7 +256,7 @@
 
         if (lines > 25) {
           clearInterval(interval);
-          hackOutput.textContent += "\n>>> SIGNAL LOCKED\n>>> MANUAL BOOST REQUIRED\n>>> Press ESC to exit\n\n";
+          hackOutput.textContent += "\n>>> SIGNAL LOCKED\n>>> MANUAL BOOST REQUIRED\n\n";
           clicker.style.display = "block";
         }
       }, 120);
@@ -235,7 +269,7 @@
       }
     });
 
-    // Signal Interference Clicker Logic
+    // Clicker logic + Transmission Lost ending
     signalBtn.addEventListener("click", () => {
       signal += multiplier;
       signalCount.textContent = signal + "%";
@@ -252,6 +286,18 @@
 
       if (signal === 100) {
         upgradeMsg.textContent = "They Are Listening.";
+
+        setTimeout(() => {
+          hackOutput.textContent += "\n>>> WARNING: SIGNAL CORRUPTION DETECTED\n";
+        }, 500);
+
+        setTimeout(() => {
+          hackOutput.textContent += ">>> TRANSMISSION LOST\n";
+        }, 1200);
+
+        setTimeout(() => {
+          hackOverlay.style.display = "none";
+        }, 3000);
       }
     });
   </script>
