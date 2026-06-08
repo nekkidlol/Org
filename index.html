@@ -126,7 +126,25 @@
   pointer-events: none;
   transition: opacity 2s ease-out;
 }
-  
+
+#system-popup {
+  position: fixed;
+  bottom: 40px;
+  right: 40px;
+  background: black;
+  color: #0f0;
+  font-family: monospace;
+  padding: 20px 30px;
+  border: 1px solid #0f0;
+  text-shadow: 0 0 6px #0f0;
+  box-shadow: 0 0 12px #0f0;
+  opacity: 0;
+  z-index: 999999;
+  pointer-events: none;
+  transition: opacity 1.5s ease;
+}
+
+    
   </style>
 </head>
 
@@ -256,6 +274,11 @@
       </div>
     </div>
   </section>
+  
+ <!-- 5 minute pop up message -->
+  <div id="system-popup">
+  >>> YOU HAVE BEEN OBSERVED
+</div>
 
   <!-- ⭐ Logo Trigger for Easter Egg -->
   <img id="hack-trigger" 
@@ -437,6 +460,19 @@
 // Update cursor every 100ms
 setInterval(updateCursorPosition, 100);
 
+// Show popup after 5 minutes (300,000 ms)
+setTimeout(() => {
+  const popup = document.getElementById("system-popup");
+  popup.style.opacity = "1";
+
+  // Optional: fade out after 10 seconds
+  setTimeout(() => {
+    popup.style.opacity = "0";
+  }, 10000);
+
+}, 300000);
+
+    
   </script>
 
 </body>
