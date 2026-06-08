@@ -110,6 +110,24 @@
   100% { opacity: 1; }
 }
 
+    #broadcast-online-overlay {
+  position: fixed;
+  inset: 0;
+  background: black;
+  color: #0f0;
+  font-family: monospace;
+  font-size: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 0 8px #0f0;
+  z-index: 100000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 2s ease-out;
+}
+
+
   </style>
 </head>
 
@@ -263,6 +281,12 @@
     <audio id="numbers-audio" src="assets/Audio/a3w4v3.mp3"></audio>
   </div>
 
+ <!-- Full-screen BROADCAST ONLINE overlay -->
+<div id="broadcast-online-overlay">
+  >>> BROADCAST ONLINE
+</div>
+
+
   <!-- ⭐ Easter Egg JavaScript -->
   <script>
     const hackTrigger = document.getElementById("hack-trigger");
@@ -373,9 +397,30 @@
       clicker.style.display = "none";
       broadcastBtn.style.display = "none";
     });
+    
+    audio.addEventListener("ended", () => {
+  const overlay = document.getElementById("broadcast-online-overlay");
+
+  // Fade in BROADCAST ONLINE
+  overlay.style.opacity = "1";
+
+  // Fade out after 2 seconds
+  setTimeout(() => {
+    overlay.style.opacity = "0";
+  }, 2000);
+
+  // Close terminal after fade-out completes
+  setTimeout(() => {
+    hackOverlay.style.display = "none";
+    audio.currentTime = 0; // reset audio
+  }, 4000);
+});
+
+
     function updateCursorPosition() {
   const cursor = document.getElementById("terminal-cursor");
   const output = document.getElementById("hack-output");
+      
 
   // Move cursor to end of terminal text
   cursor.style.position = "relative";
