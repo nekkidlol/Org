@@ -32,6 +32,11 @@
       white-space: pre-wrap;
       display: none;
     }
+
+    #hack-trigger:hover {
+      opacity: 0.5;
+      transition: opacity 0.3s;
+    }
   </style>
 </head>
 
@@ -159,19 +164,21 @@
     </div>
   </section>
 
-  <!-- ⭐ Hidden Easter Egg Trigger -->
-  <div id="hack-trigger" style="position:absolute; bottom:10px; right:10px; width:25px; height:25px; opacity:0;"></div>
+  <!-- ⭐ Logo Trigger for Easter Egg -->
+  <img id="hack-trigger" 
+       src="assets/images/logo5.png" 
+       style="position:fixed; bottom:10px; right:10px; width:60px; opacity:0.1; cursor:pointer; z-index:9999;">
 
-  <!-- ⭐ Fake Hacking Terminal -->
+  <!-- ⭐ Fake Hacked Broadcast Terminal -->
   <div id="hack-overlay">
     <pre id="hack-output"></pre>
   </div>
 
-  <!-- ⭐ Clicker Game -->
+  <!-- ⭐ Signal Interference Clicker -->
   <div id="clicker-game" style="display:none; text-align:center; margin-top:20px;">
-    <h2>Potato Clicker</h2>
-    <p>Potatoes: <span id="potato-count">0</span></p>
-    <button id="potato-btn">Harvest Potato</button>
+    <h2>Signal Interference</h2>
+    <p>Signal Strength: <span id="signal-count">0%</span></p>
+    <button id="signal-btn">Boost Signal</button>
     <p id="upgrade-msg"></p>
   </div>
 
@@ -182,49 +189,69 @@
     const hackOutput = document.getElementById("hack-output");
 
     const clicker = document.getElementById("clicker-game");
-    const potatoCount = document.getElementById("potato-count");
-    const potatoBtn = document.getElementById("potato-btn");
+    const signalCount = document.getElementById("signal-count");
+    const signalBtn = document.getElementById("signal-btn");
     const upgradeMsg = document.getElementById("upgrade-msg");
 
-    let potatoes = 0;
+    let signal = 0;
     let multiplier = 1;
 
+    // Fake hacked broadcast terminal
     hackTrigger.addEventListener("click", () => {
       hackOverlay.style.display = "block";
       hackOutput.textContent = "";
       let lines = 0;
 
       const interval = setInterval(() => {
-        hackOutput.textContent += "ACCESSING NODE " + Math.floor(Math.random() * 9999) + "...\n";
+        const messages = [
+          "TUNING FREQUENCY 142.7 MHz...",
+          "SIGNAL BLEED DETECTED...",
+          "UNAUTHORIZED BANDWIDTH ACCESS...",
+          "BOOSTING TRANSMISSION POWER...",
+          "SCANNING NEARBY TOWERS...",
+          "ENCRYPTION BYPASS ATTEMPT...",
+          "STATIC INTERFERENCE RISING...",
+          "LOCATING SOURCE OF TRANSMISSION...",
+          "AMPLIFYING CARRIER WAVE...",
+          "DETECTING UNKNOWN SIGNAL..."
+        ];
+
+        hackOutput.textContent += messages[Math.floor(Math.random() * messages.length)] + "\n";
         hackOutput.scrollTop = hackOutput.scrollHeight;
         lines++;
 
         if (lines > 25) {
           clearInterval(interval);
-          hackOutput.textContent += "\n>>> ACCESS GRANTED\n>>> Press ESC to exit\n\n";
+          hackOutput.textContent += "\n>>> SIGNAL LOCKED\n>>> MANUAL BOOST REQUIRED\n>>> Press ESC to exit\n\n";
           clicker.style.display = "block";
         }
-      }, 100);
+      }, 120);
     });
 
+    // ESC closes terminal
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         hackOverlay.style.display = "none";
       }
     });
 
-    potatoBtn.addEventListener("click", () => {
-      potatoes += multiplier;
-      potatoCount.textContent = potatoes;
+    // Signal Interference Clicker Logic
+    signalBtn.addEventListener("click", () => {
+      signal += multiplier;
+      signalCount.textContent = signal + "%";
 
-      if (potatoes === 10) {
+      if (signal === 10) {
         multiplier = 2;
-        upgradeMsg.textContent = "Upgrade unlocked: Double Potato Power!";
+        upgradeMsg.textContent = "Unauthorized Frequency Detected…";
       }
 
-      if (potatoes === 50) {
+      if (signal === 50) {
         multiplier = 5;
-        upgradeMsg.textContent = "Upgrade unlocked: Supreme Potato Lord!";
+        upgradeMsg.textContent = "Broadcast Override Successful.";
+      }
+
+      if (signal === 100) {
+        upgradeMsg.textContent = "They Are Listening.";
       }
     });
   </script>
