@@ -120,6 +120,25 @@
       75% { transform: translate(0, -1px); }
       100% { transform: translate(0, 0); }
     }
+
+    /* Terminal button */
+    .terminal-button {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 8px 14px;
+      border: 1px solid #0f0;
+      color: #0f0;
+      background: transparent;
+      font-family: "Courier New", monospace;
+      cursor: pointer;
+      text-decoration: none;
+      transition: 0.2s;
+    }
+
+    .terminal-button:hover {
+      background: rgba(0, 255, 0, 0.15);
+      box-shadow: 0 0 10px #0f0;
+    }
   </style>
 </head>
 <body>
@@ -424,7 +443,8 @@
         .join("-");
       append(`RAW: "${payload}"`);
       append(`ENCODED: ${encoded}\n`);
-      append(">>> PRESS ENTER TO BROADCAST.");
+      append(">>> PRESS ENTER TO BROADCAST _");
+      cursorEl.style.visibility = "visible";
       state = "readyToSend";
     }
 
@@ -440,7 +460,10 @@
     function endSuccess() {
       ended = true;
       append(">>> LINK SEVERED.");
-      append(">>> END: SIGNAL ESCAPED.");
+      append(">>> END: SIGNAL ESCAPED.\n");
+      append(">>> SESSION TERMINATED.\n");
+      outputEl.innerHTML += `<a class="terminal-button" href="/">RETURN TO MAIN PAGE</a>`;
+      cursorEl.style.visibility = "hidden";
       commandEl.disabled = true;
     }
 
@@ -448,7 +471,9 @@
       ended = true;
       clearScreen();
       append(">>> ATTENTION LEVEL MAXIMUM.");
-      append(">>> END: GAZE FIXED. SIGNAL LOST.");
+      append(">>> END: GAZE FIXED. SIGNAL LOST.\n");
+      outputEl.innerHTML += `<a class="terminal-button" href="/">RETURN TO MAIN PAGE</a>`;
+      cursorEl.style.visibility = "hidden";
       commandEl.disabled = true;
     }
 
@@ -456,7 +481,9 @@
       ended = true;
       clearScreen();
       append(">>> MANUAL ABORT.");
-      append(">>> END: SILENCE MAINTAINED.");
+      append(">>> END: SILENCE MAINTAINED.\n");
+      outputEl.innerHTML += `<a class="terminal-button" href="/">RETURN TO MAIN PAGE</a>`;
+      cursorEl.style.visibility = "hidden";
       commandEl.disabled = true;
     }
 
@@ -476,11 +503,18 @@
       if (state === "readyToSend") return sendBroadcast();
     }
 
+    /* ENTER KEY HANDLER — FIXED */
     commandEl.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
-        const value = commandEl.value;
+        const value = commandEl.value.trim();
         commandEl.value = "";
         updateCursor();
+
+        if (state === "readyToSend") {
+          sendBroadcast();
+          return;
+        }
+
         handleCommand(value);
       }
     });
