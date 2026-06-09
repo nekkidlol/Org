@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>NEKKID BROADCAST SYSTEM v0.7b</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <style>
     body {
       margin: 0;
@@ -16,34 +17,47 @@
       min-height: 100vh;
     }
 
+    /* CRT container with curvature */
     .crt {
       width: 90%;
       max-width: 800px;
       background: #000;
-      border: 1px solid #0f0;
-      box-shadow: 0 0 20px #0f0;
+      border: 2px solid #0f0;
       padding: 20px;
       position: relative;
       overflow: hidden;
+      box-shadow: 0 0 25px #0f0;
+      border-radius: 20px;
+
+      /* CURVED CRT EFFECT */
+      transform: perspective(900px) rotateX(2deg) rotateY(-2deg);
+      filter: drop-shadow(0 0 10px #0f0);
     }
 
     /* Scanlines */
     .crt::before {
       content: "";
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      inset: 0;
       pointer-events: none;
-      background: linear-gradient(
-        rgba(0, 255, 0, 0.05) 0%,
-        rgba(0, 0, 0, 0.2) 2%,
-        rgba(0, 255, 0, 0.05) 4%
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(0,255,0,0.05) 0px,
+        rgba(0,255,0,0.05) 2px,
+        rgba(0,0,0,0.2) 3px
       );
-      background-size: 100% 4px;
-      mix-blend-mode: screen;
       opacity: 0.4;
+      mix-blend-mode: screen;
+    }
+
+    /* Subtle CRT glow vignette */
+    .crt::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle, transparent 60%, rgba(0,255,0,0.15) 100%);
+      mix-blend-mode: overlay;
     }
 
     #output {
@@ -58,13 +72,7 @@
     }
 
     .meter-label {
-      display: inline-block;
       margin-right: 8px;
-    }
-
-    .meter {
-      display: inline-block;
-      font-family: monospace;
     }
 
     #input-line {
@@ -74,12 +82,8 @@
       margin-top: 8px;
     }
 
-    #prompt {
-      flex: 0 0 auto;
-    }
-
     #command {
-      flex: 1 1 auto;
+      flex: 1;
       background: #000;
       border: 1px solid #0f0;
       color: #0f0;
@@ -95,11 +99,11 @@
 
     /* Blinking cursor */
     #cursor {
-      display: inline-block;
       width: 10px;
       height: 18px;
       background: #0f0;
       animation: blink 0.8s steps(1) infinite;
+      pointer-events: none; /* prevents blocking input */
     }
 
     @keyframes blink {
@@ -114,11 +118,11 @@
     }
 
     @keyframes glitch {
-      0% { transform: translate(0, 0); }
-      25% { transform: translate(-1px, 0); }
-      50% { transform: translate(1px, 0); }
-      75% { transform: translate(0, -1px); }
-      100% { transform: translate(0, 0); }
+      0% { transform: translate(0,0); }
+      25% { transform: translate(-1px,0); }
+      50% { transform: translate(1px,0); }
+      75% { transform: translate(0,-1px); }
+      100% { transform: translate(0,0); }
     }
 
     /* Terminal button */
@@ -136,26 +140,32 @@
     }
 
     .terminal-button:hover {
-      background: rgba(0, 255, 0, 0.15);
+      background: rgba(0,255,0,0.15);
       box-shadow: 0 0 10px #0f0;
     }
   </style>
 </head>
+
 <body>
   <div class="crt" id="crt">
+
     <div id="status-bar">
       <span class="meter-label">ATTENTION LEVEL:</span>
-      <span class="meter" id="attention-meter">[----------]</span>
+      <span id="attention-meter">[----------]</span>
     </div>
 
     <div id="output"></div>
 
     <div id="input-line">
-      <span id="prompt">&gt;&gt;&gt;</span>
+      <span>&gt;&gt;&gt;</span>
       <input id="command" type="text" autocomplete="off" spellcheck="false">
       <div id="cursor"></div>
     </div>
+
   </div>
+
+  <!-- OPTIONAL HUM AUDIO -->
+  <!-- <audio id="hum" src="assets/hum.mp3" loop></audio> -->
 
   <script>
     const outputEl = document.getElementById("output");
@@ -176,7 +186,6 @@
       cursorEl.style.transform = `translateX(${width}px)`;
     }
     commandEl.addEventListener("input", updateCursor);
-    commandEl.addEventListener("keydown", updateCursor);
     commandEl.addEventListener("click", updateCursor);
 
     /* Clear screen */
@@ -196,26 +205,24 @@
     /* Attention meter */
     function setAttention(delta) {
       attention = Math.max(0, Math.min(10, attention + delta));
-      const filled = "#".repeat(attention);
-      const empty = "-".repeat(10 - attention);
-      attentionEl.textContent = `[${filled}${empty}]`;
+      attentionEl.textContent =
+        "[" + "#".repeat(attention) + "-".repeat(10 - attention) + "]";
 
-      if (attention >= 8 && !ended) {
+      if (attention >= 8 && !ended)
         append(">>> WARNING: THE GAZE IS SHIFTING TOWARD THIS CHANNEL.", true);
-      }
-      if (attention >= 10 && !ended) {
+
+      if (attention >= 10 && !ended)
         endLockedOut();
-      }
     }
 
-    /* Boot sequence */
+    /* Boot */
     function bootSequence() {
       clearScreen();
       append(">>> INITIALIZING NEKKID BROADCAST SYSTEM...");
       append(">>> VERSION: 0.7b (UNAUTHORIZED BUILD)");
       append(">>> STATUS: SIGNAL WEAK");
       append(">>> SOURCE: UNKNOWN\n");
-      append("A dormant broadcast node flickers online. You are not supposed to be here.");
+      append("A dormant broadcast node flickers online.");
       append("Your objective is simple:");
       append("Hijack the signal. Broadcast your message. Avoid the gaze.\n");
       showChoices([
@@ -226,16 +233,16 @@
       state = "hub";
     }
 
-    function showChoices(choices) {
-      choices.forEach((c, i) => append(`[${i + 1}] ${c}`));
+    function showChoices(list) {
+      list.forEach((c, i) => append(`[${i+1}] ${c}`));
       append("");
     }
 
     /* HUB */
-    function handleHubChoice(choice) {
-      if (choice === "1") return scanFrequencies();
-      if (choice === "2") return softOverride();
-      if (choice === "3") return accessLogs();
+    function handleHubChoice(c) {
+      if (c === "1") return scanFrequencies();
+      if (c === "2") return softOverride();
+      if (c === "3") return accessLogs();
       append(">>> INVALID INPUT.");
     }
 
@@ -244,12 +251,10 @@
       clearScreen();
       setAttention(1);
       append(">>> SCANNING FREQUENCIES...");
-      append(">>> MULTIPLE CHANNELS DETECTED.");
-      append(">>> MOST ARE QUIET. SOME ARE NOT.\n");
+      append(">>> MULTIPLE CHANNELS DETECTED.\n");
       append("You detect suppressed activity on:");
-      append("- LAYER 3: intermittent bursts, quickly damped.");
-      append("- LAYER 7: continuous low-level hum, artificially flattened.\n");
-      append("Something is actively smoothing out the strangeness.\n");
+      append("- LAYER 3: intermittent bursts.");
+      append("- LAYER 7: continuous low hum.\n");
       showChoices([
         "Focus on LAYER 3 anomalies",
         "Probe LAYER 7 suppression field",
@@ -258,68 +263,66 @@
       state = "scan";
     }
 
-    function handleScanChoice(choice) {
-      if (choice === "1") return scanL3();
-      if (choice === "2") return scanL7();
-      if (choice === "3") return hubReturn();
+    function handleScanChoice(c) {
+      if (c === "1") return scanL3();
+      if (c === "2") return scanL7();
+      if (c === "3") return hubReturn();
       append(">>> INVALID INPUT.");
     }
 
     function scanL3() {
       clearScreen();
       setAttention(1);
-      append(">>> FOCUSING ON LAYER 3 ANOMALIES...");
-      append("Short bursts of signal appear, then vanish as if erased mid-transmission.");
-      append("You catch a fragment:");
+      append(">>> FOCUSING ON LAYER 3...");
+      append("A fragment slips through:");
       append("\"...they're not what they—\"\n");
       showChoices([
-        "Try to reconstruct the fragment",
-        "Mark this channel for later injection",
+        "Try to reconstruct fragment",
+        "Mark channel for later",
         "Return to main node"
       ]);
       state = "scanL3";
     }
 
-    function handleScanL3Choice(choice) {
-      if (choice === "1") {
+    function handleScanL3Choice(c) {
+      if (c === "1") {
         clearScreen();
         setAttention(2);
-        append(">>> ATTEMPTING FRAGMENT RECONSTRUCTION...");
+        append(">>> RECONSTRUCTING...");
         append("\"THEY ARE NOT WHAT THEY CLAIM\"");
         logsUnlocked = true;
         return hubReturn();
       }
-      if (choice === "2") {
+      if (c === "2") {
         clearScreen();
-        append(">>> CHANNEL MARKED FOR LATER INJECTION.\n");
+        append(">>> CHANNEL MARKED.\n");
         return hubReturn();
       }
-      if (choice === "3") return hubReturn();
+      if (c === "3") return hubReturn();
       append(">>> INVALID INPUT.");
     }
 
     function scanL7() {
       clearScreen();
       setAttention(2);
-      append(">>> PROBING LAYER 7 SUPPRESSION FIELD...");
-      append("The hum grows louder, then flattens again.\n");
-      append(">>> ANOMALY FLAGGED: SOMETHING IS WATCHING THE FREQUENCIES.\n");
+      append(">>> PROBING LAYER 7...");
+      append("Something is watching.\n");
       showChoices([
-        "Push deeper into the suppression field",
-        "Back off and return to main node"
+        "Push deeper",
+        "Retreat to main node"
       ]);
       state = "scanL7";
     }
 
-    function handleScanL7Choice(choice) {
-      if (choice === "1") {
+    function handleScanL7Choice(c) {
+      if (c === "1") {
         clearScreen();
         setAttention(3);
         append(">>> PUSHING DEEPER...");
-        append("The UI flickers. Pressure builds.\n");
+        append("The UI flickers.\n");
         return hubReturn();
       }
-      if (choice === "2") return hubReturn();
+      if (c === "2") return hubReturn();
       append(">>> INVALID INPUT.");
     }
 
@@ -328,34 +331,31 @@
       clearScreen();
       setAttention(2);
       append(">>> INITIATING SOFT OVERRIDE...");
-      append("You slip a signal between existing noise.\n");
       showChoices([
-        "Stabilize the partial access",
-        "Risk a hard override",
+        "Stabilize access",
+        "Risk hard override",
         "Return to main node"
       ]);
       state = "soft";
     }
 
-    function handleSoftChoice(choice) {
-      if (choice === "1") {
+    function handleSoftChoice(c) {
+      if (c === "1") {
         clearScreen();
         append(">>> STABILIZING...");
         finalReady = true;
         return hubReturn();
       }
-      if (choice === "2") return hardOverride();
-      if (choice === "3") return hubReturn();
+      if (c === "2") return hardOverride();
+      if (c === "3") return hubReturn();
       append(">>> INVALID INPUT.");
     }
 
-    /* HARD OVERRIDE */
     function hardOverride() {
       clearScreen();
       setAttention(4);
-      append(">>> INITIATING HARD OVERRIDE...");
-      append("The node shakes. The UI glitches.\n");
-      append(">>> TEMPORARY CONTROL GAINED.");
+      append(">>> HARD OVERRIDE...");
+      append("Control seized.\n");
       finalReady = true;
       hubReturn();
     }
@@ -364,20 +364,17 @@
     function accessLogs() {
       clearScreen();
       setAttention(1);
-      append(">>> ACCESSING SYSTEM LOGS...\n");
-      append("[LOG 12] Unauthorized pings detected.");
-      append("[LOG 13] Unknown user accessing Layer 2.");
+      append(">>> ACCESSING LOGS...\n");
+      append("[LOG 12] Unauthorized pings.");
       append("[LOG 21] Suppression field recalibrated.\n");
       if (logsUnlocked) {
-        append("[LOG 44] They're watching the frequencies.");
-        append("[LOG 45] Don't trust the system.");
-        append("[LOG 46] The signal isn't broken. It's being held down.");
-        append("[LOG 47] If you get this far... finish what I couldn't.\n");
+        append("[LOG 44] They're watching.");
+        append("[LOG 46] The signal is being held down.\n");
       }
       hubReturn();
     }
 
-    /* RETURN TO HUB */
+    /* RETURN */
     function hubReturn() {
       append("You are back at the main node.\n");
       if (!finalReady) {
@@ -398,10 +395,10 @@
     }
 
     /* FINAL */
-    function handleFinalHubChoice(choice) {
-      if (choice === "1") return composeTransmission();
-      if (choice === "2") return accessLogs();
-      if (choice === "3") return endAbort();
+    function handleFinalHubChoice(c) {
+      if (c === "1") return composeTransmission();
+      if (c === "2") return accessLogs();
+      if (c === "3") return endAbort();
       append(">>> INVALID INPUT.");
     }
 
@@ -410,7 +407,6 @@
       setAttention(2);
       append(">>> COMPOSING FINAL TRANSMISSION...");
       append(">>> ATTENTION LEVEL CRITICAL.\n");
-      append("Choose your warning:");
       showChoices([
         "They are not what they claim",
         "The signal is being held down",
@@ -419,13 +415,12 @@
       state = "compose";
     }
 
-    function handleComposeChoice(choice) {
-      let payload;
-      if (choice === "1") payload = "THEY ARE NOT WHAT THEY CLAIM";
-      else if (choice === "2") payload = "THE SIGNAL IS BEING HELD DOWN";
-      else if (choice === "3") payload = "YOU ARE BEING WATCHED";
-      else return append(">>> INVALID INPUT.");
-
+    function handleComposeChoice(c) {
+      let payload = null;
+      if (c === "1") payload = "THEY ARE NOT WHAT THEY CLAIM";
+      if (c === "2") payload = "THE SIGNAL IS BEING HELD DOWN";
+      if (c === "3") payload = "YOU ARE BEING WATCHED";
+      if (!payload) return append(">>> INVALID INPUT.");
       encodedBroadcast(payload);
     }
 
@@ -434,7 +429,6 @@
       setAttention(3);
       append(">>> ENCODING PAYLOAD...");
       const encoded = payload
-        .toUpperCase()
         .split("")
         .map(ch => {
           const idx = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(ch);
@@ -452,7 +446,6 @@
       clearScreen();
       append(">>> TRANSMISSION SENT.");
       append(">>> THE SIGNAL IS OUT THERE NOW.\n");
-      append("For a moment, the suppression field flickers.\n");
       append(">>> THE GAZE IS LOCKING ONTO YOUR CHANNEL.\n");
       endSuccess();
     }
@@ -464,7 +457,7 @@
       append(">>> SESSION TERMINATED.\n");
       outputEl.innerHTML += `<a class="terminal-button" href="/">RETURN TO MAIN PAGE</a>`;
       cursorEl.style.visibility = "hidden";
-      commandEl.disabled = true;
+      commandEl.readOnly = true;
     }
 
     function endLockedOut() {
@@ -474,7 +467,7 @@
       append(">>> END: GAZE FIXED. SIGNAL LOST.\n");
       outputEl.innerHTML += `<a class="terminal-button" href="/">RETURN TO MAIN PAGE</a>`;
       cursorEl.style.visibility = "hidden";
-      commandEl.disabled = true;
+      commandEl.readOnly = true;
     }
 
     function endAbort() {
@@ -484,29 +477,34 @@
       append(">>> END: SILENCE MAINTAINED.\n");
       outputEl.innerHTML += `<a class="terminal-button" href="/">RETURN TO MAIN PAGE</a>`;
       cursorEl.style.visibility = "hidden";
-      commandEl.disabled = true;
+      commandEl.readOnly = true;
     }
 
     /* COMMAND HANDLER */
     function handleCommand(raw) {
       if (ended) return;
-      const cmd = raw.trim();
+      if (!state) {
+        console.warn("State missing, resetting.");
+        return bootSequence();
+      }
+
+      const c = raw.trim();
 
       if (state === "boot") return bootSequence();
-      if (state === "hub") return handleHubChoice(cmd);
-      if (state === "scan") return handleScanChoice(cmd);
-      if (state === "scanL3") return handleScanL3Choice(cmd);
-      if (state === "scanL7") return handleScanL7Choice(cmd);
-      if (state === "soft") return handleSoftChoice(cmd);
-      if (state === "finalHub") return handleFinalHubChoice(cmd);
-      if (state === "compose") return handleComposeChoice(cmd);
+      if (state === "hub") return handleHubChoice(c);
+      if (state === "scan") return handleScanChoice(c);
+      if (state === "scanL3") return handleScanL3Choice(c);
+      if (state === "scanL7") return handleScanL7Choice(c);
+      if (state === "soft") return handleSoftChoice(c);
+      if (state === "finalHub") return handleFinalHubChoice(c);
+      if (state === "compose") return handleComposeChoice(c);
       if (state === "readyToSend") return sendBroadcast();
     }
 
-    /* ENTER KEY HANDLER — FIXED */
+    /* ENTER KEY HANDLER */
     commandEl.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
-        const value = commandEl.value.trim();
+        const value = commandEl.value;
         commandEl.value = "";
         updateCursor();
 
