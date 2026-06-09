@@ -17,14 +17,15 @@
       min-height: 100vh;
     }
 
-    /* CRT container with curvature */
+    /* CRT box */
     .crt {
+      position: relative;
+      z-index: 1;
+      background: rgba(0, 0, 0, 0.75);
       width: 90%;
       max-width: 800px;
-      background: #000;
       border: 2px solid #0f0;
       padding: 20px;
-      position: relative;
       overflow: hidden;
       box-shadow: 0 0 25px #0f0;
       border-radius: 20px;
@@ -50,7 +51,7 @@
       mix-blend-mode: screen;
     }
 
-    /* Subtle CRT glow vignette */
+    /* Glow vignette */
     .crt::after {
       content: "";
       position: absolute;
@@ -69,10 +70,6 @@
     #status-bar {
       margin-bottom: 8px;
       font-size: 0.9rem;
-    }
-
-    .meter-label {
-      margin-right: 8px;
     }
 
     #input-line {
@@ -97,13 +94,13 @@
       box-shadow: 0 0 8px #0f0;
     }
 
-    /* Blinking cursor */
+    /* Cursor */
     #cursor {
       width: 10px;
       height: 18px;
       background: #0f0;
       animation: blink 0.8s steps(1) infinite;
-      pointer-events: none; /* prevents blocking input */
+      pointer-events: none;
     }
 
     @keyframes blink {
@@ -112,7 +109,7 @@
       100% { opacity: 1; }
     }
 
-    /* Glitch effect */
+    /* Glitch */
     .glitch {
       animation: glitch 0.15s linear 1;
     }
@@ -143,14 +140,14 @@
       background: rgba(0,255,0,0.15);
       box-shadow: 0 0 10px #0f0;
     }
-    
-#mobileBroadcast {
-  width: 100%;
-  margin-top: 15px;
-  text-align: center;
-}
 
-    
+    /* Mobile broadcast button */
+    #mobileBroadcast {
+      width: 100%;
+      margin-top: 15px;
+      text-align: center;
+      display: none;
+    }
   </style>
 </head>
 
@@ -164,393 +161,372 @@
 
     <div id="output"></div>
 
-   <div id="input-line">
-  <span>&gt;&gt;&gt;</span>
-  <input id="command" type="text" autocomplete="off" spellcheck="false">
-  <div id="cursor"></div>
-</div>
+    <div id="input-line">
+      <span>&gt;&gt;&gt;</span>
+      <input id="command" type="text" autocomplete="off" spellcheck="false">
+      <div id="cursor"></div>
+    </div>
 
-<!-- MOBILE BROADCAST BUTTON (hidden until needed) -->
-<button id="mobileBroadcast" style="display:none;" class="terminal-button">
-  BROADCAST
-</button>
-
+    <!-- MOBILE BROADCAST BUTTON -->
+    <button id="mobileBroadcast" class="terminal-button">BROADCAST</button>
 
   </div>
 
-  <!-- OPTIONAL HUM AUDIO -->
-  <!-- <audio id="hum" src="assets/hum.mp3" loop></audio> -->
+<script>
+  const outputEl = document.getElementById("output");
+  const commandEl = document.getElementById("command");
+  const cursorEl = document.getElementById("cursor");
+  const attentionEl = document.getElementById("attention-meter");
+  const crtEl = document.getElementById("crt");
+  const mobileBtn = document.getElementById("mobileBroadcast");
 
-  <script>
-    const outputEl = document.getElementById("output");
-    const commandEl = document.getElementById("command");
-    const cursorEl = document.getElementById("cursor");
-    const attentionEl = document.getElementById("attention-meter");
-    const crtEl = document.getElementById("crt");
+  let attention = 0;
+  let state = "boot";
+  let logsUnlocked = false;
+  let finalReady = false;
+  let ended = false;
 
-    let attention = 0;
-    let state = "boot";
-    let logsUnlocked = false;
-    let finalReady = false;
-    let ended = false;
+  function updateCursor() {
+    const width = commandEl.value.length * 9;
+    cursorEl.style.transform = `translateX(${width}px)`;
+  }
+  commandEl.addEventListener("input", updateCursor);
 
-    /* Cursor follows typing */
-    function updateCursor() {
-      const width = commandEl.value.length * 9;
-      cursorEl.style.transform = `translateX(${width}px)`;
+  function clearScreen() {
+    outputEl.textContent = "";
+  }
+
+  function append(text, glitch = false) {
+    outputEl.textContent += text + "\n";
+    if (glitch) {
+      crtEl.classList.add("glitch");
+      setTimeout(() => crtEl.classList.remove("glitch"), 150);
     }
-    commandEl.addEventListener("input", updateCursor);
-    commandEl.addEventListener("click", updateCursor);
+  }
 
-    /* Clear screen */
-    function clearScreen() {
-      outputEl.textContent = "";
-    }
+  function setAttention(delta) {
+    attention = Math.max(0, Math.min(10, attention + delta));
+    attentionEl.textContent =
+      "[" + "#".repeat(attention) + "-".repeat(10 - attention) + "]";
 
-    /* Append text */
-    function append(text, glitch = false) {
-      outputEl.textContent += text + "\n";
-      if (glitch) {
-        crtEl.classList.add("glitch");
-        setTimeout(() => crtEl.classList.remove("glitch"), 150);
-      }
-    }
+    if (attention >= 8 && !ended)
+      append(">>> WARNING: THE GAZE IS SHIFTING TOWARD THIS CHANNEL.", true);
 
-    /* Attention meter */
-    function setAttention(delta) {
-      attention = Math.max(0, Math.min(10, attention + delta));
-      attentionEl.textContent =
-        "[" + "#".repeat(attention) + "-".repeat(10 - attention) + "]";
+    if (attention >= 10 && !ended)
+      endLockedOut();
+  }
 
-      if (attention >= 8 && !ended)
-        append(">>> WARNING: THE GAZE IS SHIFTING TOWARD THIS CHANNEL.", true);
+  function bootSequence() {
+    clearScreen();
+    append(">>> INITIALIZING NEKKID BROADCAST SYSTEM...");
+    append(">>> VERSION: 0.7b (UNAUTHORIZED BUILD)");
+    append(">>> STATUS: SIGNAL WEAK");
+    append(">>> SOURCE: UNKNOWN\n");
+    append("A dormant broadcast node flickers online.");
+    append("Your objective is simple:");
+    append("Hijack the signal. Broadcast your message. Avoid the gaze.\n");
+    showChoices([
+      "Scan for open frequencies",
+      "Attempt soft override",
+      "Access system logs"
+    ]);
+    state = "hub";
+  }
 
-      if (attention >= 10 && !ended)
-        endLockedOut();
-    }
+  function showChoices(list) {
+    list.forEach((c, i) => append(`[${i+1}] ${c}`));
+    append("");
+  }
 
-    /* Boot */
-    function bootSequence() {
-      clearScreen();
-      append(">>> INITIALIZING NEKKID BROADCAST SYSTEM...");
-      append(">>> VERSION: 0.7b (UNAUTHORIZED BUILD)");
-      append(">>> STATUS: SIGNAL WEAK");
-      append(">>> SOURCE: UNKNOWN\n");
-      append("A dormant broadcast node flickers online.");
-      append("Your objective is simple:");
-      append("Hijack the signal. Broadcast your message. Avoid the gaze.\n");
+  function hubReturn() {
+    commandEl.readOnly = false;
+    commandEl.disabled = false;
+
+    append("You are back at the main node.\n");
+
+    if (!finalReady) {
       showChoices([
         "Scan for open frequencies",
         "Attempt soft override",
         "Access system logs"
       ]);
       state = "hub";
-    }
-
-    function showChoices(list) {
-      list.forEach((c, i) => append(`[${i+1}] ${c}`));
-      append("");
-    }
-
-    /* HUB */
-    function handleHubChoice(c) {
-      if (c === "1") return scanFrequencies();
-      if (c === "2") return softOverride();
-      if (c === "3") return accessLogs();
-      append(">>> INVALID INPUT.");
-    }
-
-    /* SCAN */
-    function scanFrequencies() {
-      clearScreen();
-      setAttention(1);
-      append(">>> SCANNING FREQUENCIES...");
-      append(">>> MULTIPLE CHANNELS DETECTED.\n");
-      append("You detect suppressed activity on:");
-      append("- LAYER 3: intermittent bursts.");
-      append("- LAYER 7: continuous low hum.\n");
+    } else {
       showChoices([
-        "Focus on LAYER 3 anomalies",
-        "Probe LAYER 7 suppression field",
-        "Return to main node"
+        "Compose final transmission",
+        "Review system logs",
+        "Abort and disconnect"
       ]);
-      state = "scan";
+      state = "finalHub";
     }
-
-    function handleScanChoice(c) {
-      if (c === "1") return scanL3();
-      if (c === "2") return scanL7();
-      if (c === "3") return hubReturn();
-      append(">>> INVALID INPUT.");
-    }
-
-    function scanL3() {
-      clearScreen();
-      setAttention(1);
-      append(">>> FOCUSING ON LAYER 3...");
-      append("A fragment slips through:");
-      append("\"...they're not what they—\"\n");
-      showChoices([
-        "Try to reconstruct fragment",
-        "Mark channel for later",
-        "Return to main node"
-      ]);
-      state = "scanL3";
-    }
-
-    function handleScanL3Choice(c) {
-      if (c === "1") {
-        clearScreen();
-        setAttention(2);
-        append(">>> RECONSTRUCTING...");
-        append("\"THEY ARE NOT WHAT THEY CLAIM\"");
-        logsUnlocked = true;
-        return hubReturn();
-      }
-      if (c === "2") {
-        clearScreen();
-        append(">>> CHANNEL MARKED.\n");
-        return hubReturn();
-      }
-      if (c === "3") return hubReturn();
-      append(">>> INVALID INPUT.");
-    }
-
-    function scanL7() {
-      clearScreen();
-      setAttention(2);
-      append(">>> PROBING LAYER 7...");
-      append("Something is watching.\n");
-      showChoices([
-        "Push deeper",
-        "Retreat to main node"
-      ]);
-      state = "scanL7";
-    }
-
-    function handleScanL7Choice(c) {
-      if (c === "1") {
-        clearScreen();
-        setAttention(3);
-        append(">>> PUSHING DEEPER...");
-        append("The UI flickers.\n");
-        return hubReturn();
-      }
-      if (c === "2") return hubReturn();
-      append(">>> INVALID INPUT.");
-    }
-
-    /* SOFT OVERRIDE */
-    function softOverride() {
-      clearScreen();
-      setAttention(2);
-      append(">>> INITIATING SOFT OVERRIDE...");
-      showChoices([
-        "Stabilize access",
-        "Risk hard override",
-        "Return to main node"
-      ]);
-      state = "soft";
-    }
-
-    function handleSoftChoice(c) {
-      if (c === "1") {
-        clearScreen();
-        append(">>> STABILIZING...");
-        finalReady = true;
-        return hubReturn();
-      }
-      if (c === "2") return hardOverride();
-      if (c === "3") return hubReturn();
-      append(">>> INVALID INPUT.");
-    }
-
-    function hardOverride() {
-      clearScreen();
-      setAttention(4);
-      append(">>> HARD OVERRIDE...");
-      append("Control seized.\n");
-      finalReady = true;
-      hubReturn();
-    }
-
-    /* LOGS */
-    function accessLogs() {
-      clearScreen();
-      setAttention(1);
-      append(">>> ACCESSING LOGS...\n");
-      append("[LOG 12] Unauthorized pings.");
-      append("[LOG 21] Suppression field recalibrated.\n");
-      if (logsUnlocked) {
-        append("[LOG 44] They're watching.");
-        append("[LOG 46] The signal is being held down.\n");
-      }
-      hubReturn();
-    }
-
-    /* RETURN */
-    function hubReturn() {
-      append("You are back at the main node.\n");
-      if (!finalReady) {
-        showChoices([
-          "Scan for open frequencies",
-          "Attempt soft override",
-          "Access system logs"
-        ]);
-        state = "hub";
-      } else {
-        showChoices([
-          "Compose final transmission",
-          "Review system logs",
-          "Abort and disconnect"
-        ]);
-        state = "finalHub";
-      }
-    }
-
-    /* FINAL */
-    function handleFinalHubChoice(c) {
-      if (c === "1") return composeTransmission();
-      if (c === "2") return accessLogs();
-      if (c === "3") return endAbort();
-      append(">>> INVALID INPUT.");
-    }
-
-    function composeTransmission() {
-      clearScreen();
-      setAttention(2);
-      append(">>> COMPOSING FINAL TRANSMISSION...");
-      append(">>> ATTENTION LEVEL CRITICAL.\n");
-      showChoices([
-        "They are not what they claim",
-        "The signal is being held down",
-        "You are being watched"
-      ]);
-      state = "compose";
-    }
-
-    function handleComposeChoice(c) {
-      let payload = null;
-      if (c === "1") payload = "THEY ARE NOT WHAT THEY CLAIM";
-      if (c === "2") payload = "THE SIGNAL IS BEING HELD DOWN";
-      if (c === "3") payload = "YOU ARE BEING WATCHED";
-      if (!payload) return append(">>> INVALID INPUT.");
-      encodedBroadcast(payload);
-    }
-
-    function encodedBroadcast(payload) {
-  clearScreen();
-  setAttention(3);
-  append(">>> ENCODING PAYLOAD...");
-  const encoded = payload
-    .split("")
-    .map(ch => {
-      const idx = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(ch);
-      return idx >= 0 ? idx + 1 : "/";
-    })
-    .join("-");
-  append(`RAW: "${payload}"`);
-  append(`ENCODED: ${encoded}\n`);
-  append(">>> PRESS ENTER TO BROADCAST _");
-  cursorEl.style.visibility = "visible";
-
-  // 🔥 STEP 3 GOES RIGHT HERE 🔥
-  document.getElementById("mobileBroadcast").style.display = "block";
-
-  state = "readyToSend";
-}
-
-
-function sendBroadcast() {
-  //  — hide the mobile button immediately
-  document.getElementById("mobileBroadcast").style.display = "none";
-
-  clearScreen();
-  append(">>> TRANSMISSION SENT.");
-  append(">>> THE SIGNAL IS OUT THERE NOW.\n");
-  append(">>> THE GAZE IS LOCKING ONTO YOUR CHANNEL.\n");
-  endSuccess();
-}
-
-
-    function endSuccess() {
-      ended = true;
-      append(">>> LINK SEVERED.");
-      append(">>> END: SIGNAL ESCAPED.\n");
-      append(">>> SESSION TERMINATED.\n");
-      outputEl.innerHTML += `<a class="terminal-button" href="/">RETURN TO MAIN PAGE</a>`;
-      cursorEl.style.visibility = "hidden";
-      commandEl.readOnly = true;
-    }
-
-    function endLockedOut() {
-      ended = true;
-      clearScreen();
-      append(">>> ATTENTION LEVEL MAXIMUM.");
-      append(">>> END: GAZE FIXED. SIGNAL LOST.\n");
-      outputEl.innerHTML += `<a class="terminal-button" href="/">RETURN TO MAIN PAGE</a>`;
-      cursorEl.style.visibility = "hidden";
-      commandEl.readOnly = true;
-    }
-
-    function endAbort() {
-      ended = true;
-      clearScreen();
-      append(">>> MANUAL ABORT.");
-      append(">>> END: SILENCE MAINTAINED.\n");
-      outputEl.innerHTML += `<a class="terminal-button" href="/">RETURN TO MAIN PAGE</a>`;
-      cursorEl.style.visibility = "hidden";
-      commandEl.readOnly = true;
-    }
-
-    /* COMMAND HANDLER */
-    function handleCommand(raw) {
-      if (ended) return;
-      if (!state) {
-        console.warn("State missing, resetting.");
-        return bootSequence();
-      }
-
-      const c = raw.trim();
-
-      if (state === "boot") return bootSequence();
-      if (state === "hub") return handleHubChoice(c);
-      if (state === "scan") return handleScanChoice(c);
-      if (state === "scanL3") return handleScanL3Choice(c);
-      if (state === "scanL7") return handleScanL7Choice(c);
-      if (state === "soft") return handleSoftChoice(c);
-      if (state === "finalHub") return handleFinalHubChoice(c);
-      if (state === "compose") return handleComposeChoice(c);
-      if (state === "readyToSend") return sendBroadcast();
-    }
-
-    /* ENTER KEY HANDLER */
-    commandEl.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        const value = commandEl.value;
-        commandEl.value = "";
-        updateCursor();
-
-        if (state === "readyToSend") {
-          sendBroadcast();
-          return;
-        }
-
-        handleCommand(value);
-      }
-    });
-
-    /* Start */
-    bootSequence();
-
-  
-document.getElementById("mobileBroadcast").addEventListener("click", () => {
-  if (state === "readyToSend") {
-    sendBroadcast();
   }
-});
 
-    
-  </script>
+  function handleHubChoice(c) {
+    if (c === "1") return scanFrequencies();
+    if (c === "2") return softOverride();
+    if (c === "3") return accessLogs();
+    append(">>> INVALID INPUT.");
+  }
+
+  function scanFrequencies() {
+    clearScreen();
+    setAttention(1);
+    append(">>> SCANNING FREQUENCIES...");
+    append(">>> MULTIPLE CHANNELS DETECTED.\n");
+    append("You detect suppressed activity on:");
+    append("- LAYER 3: intermittent bursts.");
+    append("- LAYER 7: continuous low hum.\n");
+    showChoices([
+      "Focus on LAYER 3 anomalies",
+      "Probe LAYER 7 suppression field",
+      "Return to main node"
+    ]);
+    state = "scan";
+  }
+
+  function handleScanChoice(c) {
+    if (c === "1") return scanL3();
+    if (c === "2") return scanL7();
+    if (c === "3") return hubReturn();
+    append(">>> INVALID INPUT.");
+  }
+
+  function scanL3() {
+    clearScreen();
+    setAttention(1);
+    append(">>> FOCUSING ON LAYER 3...");
+    append("A fragment slips through:");
+    append("\"...they're not what they—\"\n");
+    showChoices([
+      "Try to reconstruct fragment",
+      "Mark channel for later",
+      "Return to main node"
+    ]);
+    state = "scanL3";
+  }
+
+  function handleScanL3Choice(c) {
+    if (c === "1") {
+      clearScreen();
+      setAttention(2);
+      append(">>> RECONSTRUCTING...");
+      append("\"THEY ARE NOT WHAT THEY CLAIM\"");
+      logsUnlocked = true;
+      return hubReturn();
+    }
+    if (c === "2") {
+      clearScreen();
+      append(">>> CHANNEL MARKED.\n");
+      return hubReturn();
+    }
+    if (c === "3") return hubReturn();
+    append(">>> INVALID INPUT.");
+  }
+
+  function scanL7() {
+    clearScreen();
+    setAttention(2);
+    append(">>> PROBING LAYER 7...");
+    append("Something is watching.\n");
+    showChoices([
+      "Push deeper",
+      "Retreat to main node"
+    ]);
+    state = "scanL7";
+  }
+
+  function handleScanL7Choice(c) {
+    if (c === "1") {
+      clearScreen();
+      setAttention(3);
+      append(">>> PUSHING DEEPER...");
+      append("The UI flickers.\n");
+      return hubReturn();
+    }
+    if (c === "2") return hubReturn();
+    append(">>> INVALID INPUT.");
+  }
+
+  function softOverride() {
+    clearScreen();
+    setAttention(2);
+    append(">>> INITIATING SOFT OVERRIDE...");
+    showChoices([
+      "Stabilize access",
+      "Risk hard override",
+      "Return to main node"
+    ]);
+    state = "soft";
+  }
+
+  function handleSoftChoice(c) {
+    if (c === "1") {
+      clearScreen();
+      append(">>> STABILIZING...");
+      finalReady = true;
+      return hubReturn();
+    }
+    if (c === "2") return hardOverride();
+    if (c === "3") return hubReturn();
+    append(">>> INVALID INPUT.");
+  }
+
+  function hardOverride() {
+    clearScreen();
+    setAttention(4);
+    append(">>> HARD OVERRIDE...");
+    append("Control seized.\n");
+    finalReady = true;
+    hubReturn();
+  }
+
+  function accessLogs() {
+    clearScreen();
+    setAttention(1);
+    append(">>> ACCESSING LOGS...\n");
+    append("[LOG 12] Unauthorized pings.");
+    append("[LOG 21] Suppression field recalibrated.\n");
+    if (logsUnlocked) {
+      append("[LOG 44] They're watching.");
+      append("[LOG 46] The signal is being held down.\n");
+    }
+    hubReturn();
+  }
+
+  function handleFinalHubChoice(c) {
+    if (c === "1") return composeTransmission();
+    if (c === "2") return accessLogs();
+    if (c === "3") return endAbort();
+    append(">>> INVALID INPUT.");
+  }
+
+  function composeTransmission() {
+    clearScreen();
+    setAttention(2);
+    append(">>> COMPOSING FINAL TRANSMISSION...");
+    append(">>> ATTENTION LEVEL CRITICAL.\n");
+    showChoices([
+      "They are not what they claim",
+      "The signal is being held down",
+      "You are being watched"
+    ]);
+    state = "compose";
+  }
+
+  function handleComposeChoice(c) {
+    let payload = null;
+    if (c === "1") payload = "THEY ARE NOT WHAT THEY CLAIM";
+    if (c === "2") payload = "THE SIGNAL IS BEING HELD DOWN";
+    if (c === "3") payload = "YOU ARE BEING WATCHED";
+    if (!payload) return append(">>> INVALID INPUT.");
+    encodedBroadcast(payload);
+  }
+
+  function encodedBroadcast(payload) {
+    clearScreen();
+    setAttention(3);
+    append(">>> ENCODING PAYLOAD...");
+    const encoded = payload
+      .split("")
+      .map(ch => {
+        const idx = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(ch);
+        return idx >= 0 ? idx + 1 : "/";
+      })
+      .join("-");
+    append(`RAW: "${payload}"`);
+    append(`ENCODED: ${encoded}\n`);
+    append(">>> PRESS ENTER TO BROADCAST _");
+    cursorEl.style.visibility = "visible";
+
+    // Show mobile button
+    mobileBtn.style.display = "block";
+
+    state = "readyToSend";
+  }
+
+  function sendBroadcast() {
+    // Hide mobile button
+    mobileBtn.style.display = "none";
+
+    clearScreen();
+    append(">>> TRANSMISSION SENT.");
+    append(">>> THE SIGNAL IS OUT THERE NOW.\n");
+    append(">>> THE GAZE IS LOCKING ONTO YOUR CHANNEL.\n");
+    endSuccess();
+  }
+
+  function endSuccess() {
+    ended = true;
+    append(">>> LINK SEVERED.");
+    append(">>> END: SIGNAL ESCAPED.\n");
+    append(">>> SESSION TERMINATED.\n");
+    outputEl.innerHTML += `<a class="terminal-button" href="/">RETURN TO MAIN PAGE</a>`;
+    cursorEl.style.visibility = "hidden";
+    commandEl.readOnly = true;
+  }
+
+  function endLockedOut() {
+    ended = true;
+    clearScreen();
+    append(">>> ATTENTION LEVEL MAXIMUM.");
+    append(">>> END: GAZE FIXED. SIGNAL LOST.\n");
+    outputEl.innerHTML += `<a class="terminal-button" href="/">RETURN TO MAIN PAGE</a>`;
+    cursorEl.style.visibility = "hidden";
+    commandEl.readOnly = true;
+  }
+
+  function endAbort() {
+    ended = true;
+    clearScreen();
+    append(">>> MANUAL ABORT.");
+    append(">>> END: SILENCE MAINTAINED.\n");
+    outputEl.innerHTML += `<a class="terminal-button" href="/">RETURN TO MAIN PAGE</a>`;
+    cursorEl.style.visibility = "hidden";
+    commandEl.readOnly = true;
+  }
+
+  function handleCommand(raw) {
+    if (ended) return;
+
+    if (!state) {
+      console.warn("State missing, resetting.");
+      return bootSequence();
+    }
+
+    const c = raw.trim();
+
+    if (state === "boot") return bootSequence();
+    if (state === "hub") return handleHubChoice(c);
+    if (state === "scan") return handleScanChoice(c);
+    if (state === "scanL3") return handleScanL3Choice(c);
+    if (state === "scanL7") return handleScanL7Choice(c);
+    if (state === "soft") return handleSoftChoice(c);
+    if (state === "finalHub") return handleFinalHubChoice(c);
+    if (state === "compose") return handleComposeChoice(c);
+    if (state === "readyToSend") return sendBroadcast();
+  }
+
+  commandEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      const value = commandEl.value;
+      commandEl.value = "";
+      updateCursor();
+
+      if (state === "readyToSend") {
+        sendBroadcast();
+        return;
+      }
+
+      handleCommand(value);
+    }
+  });
+
+  mobileBtn.addEventListener("click", () => {
+    if (state === "readyToSend") sendBroadcast();
+  });
+
+  bootSequence();
+</script>
+
 </body>
 </html>
