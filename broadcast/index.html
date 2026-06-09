@@ -109,6 +109,24 @@
       75% { transform: translate(0, -1px); }
       100% { transform: translate(0, 0); }
     }
+    
+/* Blinking terminal cursor */
+#cursor {
+  display: inline-block;
+  width: 10px;
+  height: 18px;
+  background: #0f0;
+  margin-left: 4px;
+  animation: blink 0.8s steps(1) infinite;
+}
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+    
   </style>
 </head>
 <body>
@@ -119,9 +137,10 @@
     </div>
     <div id="output"></div>
     <div id="input-line">
-      <span id="prompt">&gt;&gt;&gt;</span>
-      <input id="command" type="text" autocomplete="off" spellcheck="false" placeholder="Type 1, 2, 3 or a command and press Enter">
-    </div>
+  <span id="prompt">&gt;&gt;&gt;</span>
+  <input id="command" type="text" autocomplete="off" spellcheck="false">
+  <div id="cursor"></div>
+</div>
     <div id="help">
       Valid inputs: numbers for choices (1, 2, 3...) or commands like <code>logs</code>, <code>status</code>, <code>abort</code>.
     </div>
@@ -620,6 +639,24 @@
     // Initial boot
     setAttention(0);
     bootSequence();
+    
+    // Keep cursor aligned with input
+const cursor = document.getElementById("cursor");
+const command = document.getElementById("command");
+
+function updateCursor() {
+  const width = command.value.length * 9; // adjust if needed
+  cursor.style.transform = `translateX(${width}px)`;
+}
+
+command.addEventListener("input", updateCursor);
+command.addEventListener("keydown", updateCursor);
+command.addEventListener("click", updateCursor);
+
+// Initial position
+updateCursor();
+
+    
   </script>
 </body>
 </html>
