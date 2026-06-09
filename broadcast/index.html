@@ -25,30 +25,24 @@
   pointer-events: none;
   z-index: 0;
 }
-    /* CRT box sits ABOVE the overlay */
+   /* CRT box sits ABOVE the overlay */
 .crt {
   position: relative;
   z-index: 1;
   background: rgba(0, 0, 0, 0.75); /* semi-transparent */
+  width: 90%;
+  max-width: 800px;
+  border: 2px solid #0f0;
+  padding: 20px;
+  overflow: hidden;
+  box-shadow: 0 0 25px #0f0;
+  border-radius: 20px;
+
+  /* CURVED CRT EFFECT */
+  transform: perspective(900px) rotateX(2deg) rotateY(-2deg);
+  filter: drop-shadow(0 0 10px #0f0);
 }
 
-
-    /* CRT container with curvature */
-    .crt {
-      width: 90%;
-      max-width: 800px;
-      background: #000;
-      border: 2px solid #0f0;
-      padding: 20px;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 0 25px #0f0;
-      border-radius: 20px;
-
-      /* CURVED CRT EFFECT */
-      transform: perspective(900px) rotateX(2deg) rotateY(-2deg);
-      filter: drop-shadow(0 0 10px #0f0);
-    }
 
     /* Scanlines */
     .crt::before {
