@@ -25,6 +25,12 @@
   pointer-events: none;
   z-index: 0;
 }
+    /* CRT box sits ABOVE the overlay */
+.crt {
+  position: relative;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.75); /* semi-transparent */
+}
 
 
     /* CRT container with curvature */
