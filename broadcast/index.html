@@ -143,6 +143,14 @@
       background: rgba(0,255,0,0.15);
       box-shadow: 0 0 10px #0f0;
     }
+    
+#mobileBroadcast {
+  width: 100%;
+  margin-top: 15px;
+  text-align: center;
+}
+
+    
   </style>
 </head>
 
@@ -156,11 +164,17 @@
 
     <div id="output"></div>
 
-    <div id="input-line">
-      <span>&gt;&gt;&gt;</span>
-      <input id="command" type="text" autocomplete="off" spellcheck="false">
-      <div id="cursor"></div>
-    </div>
+   <div id="input-line">
+  <span>&gt;&gt;&gt;</span>
+  <input id="command" type="text" autocomplete="off" spellcheck="false">
+  <div id="cursor"></div>
+</div>
+
+<!-- MOBILE BROADCAST BUTTON (hidden until needed) -->
+<button id="mobileBroadcast" style="display:none;" class="terminal-button">
+  BROADCAST
+</button>
+
 
   </div>
 
@@ -425,30 +439,39 @@
     }
 
     function encodedBroadcast(payload) {
-      clearScreen();
-      setAttention(3);
-      append(">>> ENCODING PAYLOAD...");
-      const encoded = payload
-        .split("")
-        .map(ch => {
-          const idx = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(ch);
-          return idx >= 0 ? idx + 1 : "/";
-        })
-        .join("-");
-      append(`RAW: "${payload}"`);
-      append(`ENCODED: ${encoded}\n`);
-      append(">>> PRESS ENTER TO BROADCAST _");
-      cursorEl.style.visibility = "visible";
-      state = "readyToSend";
-    }
+  clearScreen();
+  setAttention(3);
+  append(">>> ENCODING PAYLOAD...");
+  const encoded = payload
+    .split("")
+    .map(ch => {
+      const idx = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(ch);
+      return idx >= 0 ? idx + 1 : "/";
+    })
+    .join("-");
+  append(`RAW: "${payload}"`);
+  append(`ENCODED: ${encoded}\n`);
+  append(">>> PRESS ENTER TO BROADCAST _");
+  cursorEl.style.visibility = "visible";
 
-    function sendBroadcast() {
-      clearScreen();
-      append(">>> TRANSMISSION SENT.");
-      append(">>> THE SIGNAL IS OUT THERE NOW.\n");
-      append(">>> THE GAZE IS LOCKING ONTO YOUR CHANNEL.\n");
-      endSuccess();
-    }
+  // 🔥 STEP 3 GOES RIGHT HERE 🔥
+  document.getElementById("mobileBroadcast").style.display = "block";
+
+  state = "readyToSend";
+}
+
+
+function sendBroadcast() {
+  //  — hide the mobile button immediately
+  document.getElementById("mobileBroadcast").style.display = "none";
+
+  clearScreen();
+  append(">>> TRANSMISSION SENT.");
+  append(">>> THE SIGNAL IS OUT THERE NOW.\n");
+  append(">>> THE GAZE IS LOCKING ONTO YOUR CHANNEL.\n");
+  endSuccess();
+}
+
 
     function endSuccess() {
       ended = true;
@@ -519,6 +542,15 @@
 
     /* Start */
     bootSequence();
+
+  
+document.getElementById("mobileBroadcast").addEventListener("click", () => {
+  if (state === "readyToSend") {
+    sendBroadcast();
+  }
+});
+
+    
   </script>
 </body>
 </html>
