@@ -284,10 +284,23 @@
     </div>
   </section>
   
- <!-- 5 minute pop up message -->
-  <div id="system-popup">
-  >>> YOU HAVE BEEN OBSERVED, |THEY ARE WATCHING|
+<div id="system-popup">
+  >>> YOU HAVE BEEN OBSERVED, |THEY ARE WATCHING|  
+
+  <span id="map-secret" style="opacity:0; display:block; margin-top:6px; font-size:12px; transition:opacity 0.3s;">
+    REF: <a href="/map" style="color:#0f0; text-decoration:none;">0x4D4150</a>
+  </span>
 </div>
+
+<script>
+  const popup = document.getElementById("system-popup");
+  const secret = document.getElementById("map-secret");
+
+  popup.addEventListener("mouseenter", () => secret.style.opacity = 0.25);
+  popup.addEventListener("mouseleave", () => secret.style.opacity = 0);
+</script>
+
+
 
   <!-- ⭐ Logo Trigger for Easter Egg -->
   <img id="hack-trigger" 
