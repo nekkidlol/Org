@@ -164,7 +164,8 @@
   text-shadow: 0 0 4px #0f0;
   z-index: 99999;
   font-size: 14px;
-  pointer-events: none;
+  pointer-events: auto;
+cursor: default;
 }
 
 #signal-bar {
@@ -553,9 +554,11 @@ updateSignalMeter();
     
   </script>
 
-  <div id="signal-meter">
+<div id="signal-meter" onclick="window.location='/broadcast';">
   SIGNAL: <span id="signal-bar">███░░</span> <span id="signal-value">62%</span>
 </div>
+
+
 
 
 </body>
