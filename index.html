@@ -152,6 +152,24 @@
   pointer-events: none;
   transition: opacity 1.5s ease;
 }
+#signal-meter {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  font-family: monospace;
+  color: #0f0;
+  background: rgba(0,0,0,0.6);
+  padding: 6px 10px;
+  border: 1px solid #0f0;
+  text-shadow: 0 0 4px #0f0;
+  z-index: 99999;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+#signal-bar {
+  letter-spacing: 1px;
+}
 
     
   </style>
@@ -500,8 +518,45 @@ setTimeout(() => {
 
 }, 100000);
 
+function updateSignalMeter() {
+  const bar = document.getElementById("signal-bar");
+  const value = document.getElementById("signal-value");
+
+  // Random signal between 20% and 98%
+  let signal = Math.floor(Math.random() * 78) + 20;
+
+  // Build bar (5 segments)
+  let filled = Math.floor(signal / 20);
+  let barStr = "";
+
+  for (let i = 0; i < 5; i++) {
+    barStr += i < filled ? "█" : "░";
+  }
+
+  // Occasionally glitch
+  if (Math.random() < 0.05) {
+    barStr = "▒▒▒▒▒";
+    value.textContent = "??%";
+  } else {
+    value.textContent = signal + "%";
+  }
+
+  bar.textContent = barStr;
+}
+
+// Update every 3–6 seconds randomly
+setInterval(updateSignalMeter, Math.random() * 3000 + 3000);
+
+// Initial draw
+updateSignalMeter();
+
     
   </script>
+
+  <div id="signal-meter">
+  SIGNAL: <span id="signal-bar">███░░</span> <span id="signal-value">62%</span>
+</div>
+
 
 </body>
 </html>
